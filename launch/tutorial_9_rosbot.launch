@@ -8,11 +8,18 @@
 
     <include file="$(find tutorial_pkg)/launch/depthimage_to_laserscan.launch"></include>
 
-    <node pkg="image_transport" type="republish" name="rgb_compress" args=" raw in:=/camera/rgb/image_raw compressed out:=/rgb_republish"/>
+    <node pkg="topic_tools" name="throttle_rgb" type="throttle" args="messages /camera/rgb/image_raw 1.0 /rgb_raw"/>
+    <node pkg="topic_tools" name="throttle_depth" type="throttle" args=" messages /camera/depth/image_raw 1.0 /depth_raw"/>
 
-    <node pkg="image_transport" type="republish" name="depth_republish" args=" raw in:=/camera/depth/image_raw compressedDepth out:=/depth_republish">
-        <param name="compressedDepth/format" value="png"/>
-        <param name="compressedDepth/png_level" value="1"/>
+
+    <node name="find_object_3d" pkg="find_object_2d" type="find_object_2d" output="log" required="true">
+        <param name="gui" value="false" type="bool"/>
+        <param name="subscribe_depth" value="true" type="bool"/>
+        <param name="objects_path" value="$(find tutorial_pkg)/image_rec/" type="str"/>
+        <param name="object_prefix" value="object" type="str"/>
+        <remap from="rgb/image_rect_color" to="/rgb_raw"/>
+        <remap from="depth_registered/image_raw" to="/depth_raw"/>
+        <remap from="depth_registered/camera_info" to="/camera/depth/camera_info"/>
     </node>
 
     <include file="$(find tutorial_pkg)/launch/gmapping.launch"></include>
